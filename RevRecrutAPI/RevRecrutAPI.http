@@ -1,0 +1,6 @@
+@RevRecrutAPI_HostAddress = http://localhost:5219
+
+GET {{RevRecrutAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
