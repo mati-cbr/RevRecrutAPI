@@ -1,18 +1,37 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+using RevRecrutAPI.DB;
+using RevRecrutAPI.DTOs.Candidate.Profile;
+
 namespace RevRecrutAPI.Services.Candidate.Profile;
 
-public class ProfileService : IProfileService
+public class ProfileService(AppDbContext context) : IProfileService
 {
-    private static readonly List<Models.Candidate.Profile> profiles =
-    [
-    new Models.Candidate.Profile { Id = 1, FirstName = "Jan", LastName = "Kowalski", ContactEMail = "jan@o2.pl", ContactPhone = "123321123" },
-            new Models.Candidate.Profile { Id = 2, FirstName = "Kazimierz", LastName = "Heinz", ContactEMail = "kazik@wp.pl", ContactPhone = "333222111" },
-            new Models.Candidate.Profile { Id = 3, FirstName = "Mariusz", LastName = "Alkoholik", ContactEMail = "pantadeuszpollitra@interia.pl", ContactPhone = "222222222" },
-            new Models.Candidate.Profile { Id = 4, FirstName = "Mścichuj", LastName = "Biały", ContactEMail = "chuj@gmail.pl", ContactPhone = "999999999" }
-    ];
-    public Task<Models.Candidate.Profile> AddProfileAsync(Models.Candidate.Profile profile)
+    public async Task<ProfileResponse> AddProfileAsync(CreateProfileRequest profile)
     {
-        throw new NotImplementedException();
+        var newProfile = new Entities.Candidate.Profile
+        {
+            FirstName = profile.FirstName,
+            LastName = profile.LastName,
+            ContactEMail = profile.ContactEMail,
+            ContactPhone = profile.ContactPhone,
+            Address1 = profile.Address1,
+            Address2 = profile.Address2,
+        };
+
+        context.Profiles.Add(newProfile);
+        await context.SaveChangesAsync();
+
+        return new ProfileResponse
+        {
+            Id = newProfile.Id,
+            FirstName = newProfile.FirstName,
+            LastName = newProfile.LastName,
+            ContactEMail = newProfile.ContactEMail,
+            ContactPhone = newProfile.ContactPhone,
+            Address1 = newProfile.Address1,
+            Address2 = newProfile.Address2,
+        };
     }
 
     public Task<bool> DeleteProfileAsync(int id)
@@ -20,16 +39,36 @@ public class ProfileService : IProfileService
         throw new NotImplementedException();
     }
 
-    public async Task<List<Models.Candidate.Profile>> GetAllProfilesAsync()
-        => await Task.FromResult(profiles);
+    public async Task<List<ProfileResponse>> GetAllProfilesAsync()
+        => await context.Profiles.Select(p => new ProfileResponse
+        {
+            FirstName = p.FirstName,
+            LastName = p.LastName,
+            ContactEMail = p.ContactEMail,
+            ContactPhone = p.ContactPhone,
+            Address1 = p.Address1,
+            Address2 = p.Address2,
+        }).ToListAsync();
 
-    public async Task<Models.Candidate.Profile?> GetProfileByIdAsync(int id)
+    public async Task<ProfileResponse?> GetProfileByIdAsync(int id)
     {
-        var result = profiles.FirstOrDefault(p => p.Id == id);
-        return await Task.FromResult(result);
+        var result = await context.Profiles
+            .Where(p => p.Id == id)
+            .Select(p => new ProfileResponse
+            {
+                FirstName = p.FirstName,
+                LastName = p.LastName,
+                ContactEMail = p.ContactEMail,
+                ContactPhone = p.ContactPhone,
+                Address1 = p.Address1,
+                Address2 = p.Address2,
+            })
+            .FirstOrDefaultAsync();
+
+        return result;
     }
 
-    public Task<bool> UpdateProfileAsync(int id, Models.Candidate.Profile profile)
+    public Task<bool> UpdateProfileAsync(int id, Entities.Candidate.Profile profile)
     {
         throw new NotImplementedException();
     }

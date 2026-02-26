@@ -1,6 +1,6 @@
-﻿namespace RevRecrutAPI.Models.Candidate
+﻿namespace RevRecrutAPI.DTOs.Candidate.Profile
 {
-    public class Profile
+    public class UpdateProfileRequest
     {
         public int Id { get; set; }
         public required string FirstName { get; set; }

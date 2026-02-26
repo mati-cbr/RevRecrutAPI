@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
+using RevRecrutAPI.DB;
 using RevRecrutAPI.Services.Candidate.Profile;
 using Scalar.AspNetCore;
 using System.Globalization;
@@ -23,6 +25,10 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
            .AddSupportedCultures(supportedCultures)
            .AddSupportedUICultures(supportedCultures);
 });
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionStringToDatabase")));
+
 // --------------------------
 // RevRecrut services BEGIN
 builder.Services.AddScoped<IProfileService, ProfileService>();
