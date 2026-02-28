@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="RevRecrutAPI/RevRecrutAPI.csproj" />
+  <Project Path="RevRecrutAPIUnitTests/RevRecrutAPIUnitTests.csproj" Id="c352f71f-b5f4-4f6e-8a38-157595d2578e" />
 </Solution>
