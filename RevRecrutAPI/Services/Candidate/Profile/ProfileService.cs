@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using RevRecrutAPI.DB;
 using RevRecrutAPI.DTOs.Candidate.Profile;
+using System.Linq;
 
 namespace RevRecrutAPI.Services.Candidate.Profile;
 
@@ -39,31 +40,32 @@ public class ProfileService(AppDbContext context) : IProfileService
         throw new NotImplementedException();
     }
 
-    public async Task<List<ProfileResponse>> GetAllProfilesAsync()
-        => await context.Profiles.Select(p => new ProfileResponse
+    public IQueryable<ProfileResponse> GetAllProfiles()
+        => context.Profiles.Select(p => new ProfileResponse
         {
+            Id = p.Id,
             FirstName = p.FirstName,
             LastName = p.LastName,
             ContactEMail = p.ContactEMail,
             ContactPhone = p.ContactPhone,
             Address1 = p.Address1,
             Address2 = p.Address2,
-        }).ToListAsync();
+        });
 
-    public async Task<ProfileResponse?> GetProfileByIdAsync(int id)
+    public IQueryable<ProfileResponse?> GetProfileById(int id)
     {
-        var result = await context.Profiles
+        IQueryable<ProfileResponse> result = context.Profiles
             .Where(p => p.Id == id)
             .Select(p => new ProfileResponse
             {
+                Id = p.Id,
                 FirstName = p.FirstName,
                 LastName = p.LastName,
                 ContactEMail = p.ContactEMail,
                 ContactPhone = p.ContactPhone,
                 Address1 = p.Address1,
                 Address2 = p.Address2,
-            })
-            .FirstOrDefaultAsync();
+            });
 
         return result;
     }

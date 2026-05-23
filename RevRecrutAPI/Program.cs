@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using RevRecrutAPI.DB;
+using RevRecrutAPI.Services.Auth;
 using RevRecrutAPI.Services.Candidate.Profile;
 using Scalar.AspNetCore;
 using System.Globalization;
@@ -29,11 +30,21 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionStringToDatabase")));
 
-// --------------------------
-// RevRecrut services BEGIN
+
 builder.Services.AddScoped<IProfileService, ProfileService>();
-// --------------------------
-// RevRecrut services END
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 
 var app = builder.Build();
 
@@ -47,6 +58,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 

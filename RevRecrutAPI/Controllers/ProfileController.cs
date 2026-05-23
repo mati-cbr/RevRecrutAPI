@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RevRecrutAPI.DTOs.Candidate.Profile;
 using RevRecrutAPI.Services.Candidate.Profile;
 
@@ -10,13 +11,14 @@ public class ProfileController(IProfileService service) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ProfileResponse>>> GetProfiles()
-        => Ok(await service.GetAllProfilesAsync());
+        => Ok(await service.GetAllProfiles().ToListAsync());
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ProfileResponse>> GetProfile(int id)
     {
-        var profile = await service.GetProfileByIdAsync(id);
-        return profile is null ? NotFound("Profile with given ID was not found") : Ok(profile);
+        var profile = service.GetProfileById(id);
+        var result = await profile.FirstOrDefaultAsync();
+        return result is null ? NotFound("Profile with given ID was not found") : Ok(profile);
     }
 
     [HttpPost]
