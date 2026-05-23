@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using RevRecrutAPI.DB;
 using RevRecrutAPI.DTOs.UserDto;
 using RevRecrutAPI.Entities.User;
-using RevRecrutAPI.Migrations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -58,7 +57,8 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Role, user.Role),
         };
 
         var key = new SymmetricSecurityKey(

@@ -24,11 +24,9 @@ namespace RevRecrutAPI.Migrations
 
             modelBuilder.Entity("RevRecrutAPI.Entities.Candidate.Profile", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Address1")
                         .IsRequired()
@@ -54,7 +52,20 @@ namespace RevRecrutAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ReadableId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReadableId"));
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Profiles");
                 });
@@ -65,8 +76,14 @@ namespace RevRecrutAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Username")
@@ -76,6 +93,20 @@ namespace RevRecrutAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RevRecrutAPI.Entities.Candidate.Profile", b =>
+                {
+                    b.HasOne("RevRecrutAPI.Entities.User.User", "User")
+                        .WithOne("profile")
+                        .HasForeignKey("RevRecrutAPI.Entities.Candidate.Profile", "UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RevRecrutAPI.Entities.User.User", b =>
+                {
+                    b.Navigation("profile");
                 });
 #pragma warning restore 612, 618
         }

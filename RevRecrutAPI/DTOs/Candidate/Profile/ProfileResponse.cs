@@ -2,7 +2,8 @@
 {
     public class ProfileResponse
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
+        public int ReadableId { get; set; }
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
         public required string ContactEMail { get; set; }

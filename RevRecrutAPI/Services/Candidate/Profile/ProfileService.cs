@@ -10,8 +10,11 @@ public class ProfileService(AppDbContext context) : IProfileService
 {
     public async Task<ProfileResponse> AddProfileAsync(CreateProfileRequest profile)
     {
+        var latestProfileReadableId = await context.Profiles.FirstOrDefaultAsync();
         var newProfile = new Entities.Candidate.Profile
         {
+            Id = new Guid(),
+            ReadableId = default,
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             ContactEMail = profile.ContactEMail,
@@ -26,6 +29,7 @@ public class ProfileService(AppDbContext context) : IProfileService
         return new ProfileResponse
         {
             Id = newProfile.Id,
+            ReadableId = newProfile.ReadableId,
             FirstName = newProfile.FirstName,
             LastName = newProfile.LastName,
             ContactEMail = newProfile.ContactEMail,
@@ -44,6 +48,7 @@ public class ProfileService(AppDbContext context) : IProfileService
         => context.Profiles.Select(p => new ProfileResponse
         {
             Id = p.Id,
+            ReadableId = p.ReadableId,
             FirstName = p.FirstName,
             LastName = p.LastName,
             ContactEMail = p.ContactEMail,
@@ -52,13 +57,14 @@ public class ProfileService(AppDbContext context) : IProfileService
             Address2 = p.Address2,
         });
 
-    public IQueryable<ProfileResponse?> GetProfileById(int id)
+    public IQueryable<ProfileResponse?> GetProfileById(Guid id)
     {
         IQueryable<ProfileResponse> result = context.Profiles
             .Where(p => p.Id == id)
             .Select(p => new ProfileResponse
             {
                 Id = p.Id,
+                ReadableId = p.ReadableId,
                 FirstName = p.FirstName,
                 LastName = p.LastName,
                 ContactEMail = p.ContactEMail,

@@ -10,25 +10,25 @@ namespace RevRecrutAPI.Controllers;
 [ApiController]
 public class ProfileController(IProfileService service) : ControllerBase
 {
-    [Authorize]
+    [Authorize(Roles = "Admin, Candidate, Recruiter")]
     [HttpGet]
     public async Task<ActionResult<List<ProfileResponse>>> GetProfiles()
         => Ok(await service.GetAllProfiles().ToListAsync());
 
-    [Authorize]
+    [Authorize(Roles = "Admin, Candidate, Recruiter")]
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProfileResponse>> GetProfile(int id)
+    public async Task<ActionResult<ProfileResponse>> GetProfile(Guid id)
     {
         var profile = service.GetProfileById(id);
         var result = await profile.FirstOrDefaultAsync();
         return result is null ? NotFound("Profile with given ID was not found") : Ok(profile);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin, Candidate")]
     [HttpPost]
     public async Task<ActionResult<ProfileResponse>> AddProfile(CreateProfileRequest profile)
     {
         var createdProfile = await service.AddProfileAsync(profile);
-        return CreatedAtAction(nameof(GetProfile), new { id = createdProfile.Id }, createdProfile);
+        return CreatedAtAction(nameof(GetProfile), new { Id = createdProfile.Id }, createdProfile);
     }
 }

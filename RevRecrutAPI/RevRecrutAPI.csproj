@@ -23,6 +23,7 @@
     <Folder Include="DTOs\Candidate\Candidature\" />
     <Folder Include="DTOs\Recruiter\" />
     <Folder Include="Entities\Recruiter\" />
+    <Folder Include="Migrations\" />
     <Folder Include="Services\Recruiter\" />
   </ItemGroup>
 

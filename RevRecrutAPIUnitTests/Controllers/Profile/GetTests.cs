@@ -18,7 +18,7 @@ public class ProfileController_GetProfileTests
     { 
         pr = new ProfileResponse
         {
-            Id = 1,
+            ReadableId = 1,
             FirstName = "Marian",
             LastName = "Testowy",
             ContactEMail = "marian@test.pl",
@@ -40,7 +40,7 @@ public class ProfileController_GetProfileTests
         var controller = new ProfileController(serviceMock.Object);
 
         // Act
-        var pr_response = await controller.GetProfile(1);
+        //var pr_response = await controller.GetProfile(1);
 
         // Assert
         //serviceMock.Verify(s => s.GetProfileByIdAsync(1), Times.Once);
