@@ -11,4 +11,6 @@ public class User
     public string? Email {  get; set; } = String.Empty;
     public string? Role { get; set; } = "Candidate";
     public Profile? profile { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefrreshTokenExpiryTime { get; set; }
 }

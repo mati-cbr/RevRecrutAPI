@@ -6,5 +6,6 @@ namespace RevRecrutAPI.Services.Auth;
 public interface IAuthService
 {
     Task<User?> RegisterAsync(UserDto request);
-    Task<string?> LoginAsync(UserDto request);
+    Task<TokenResponse?> LoginAsync(UserDto request);
+    Task<TokenResponse?> RefreshTokensAsync(TokenRequest request);
 }
