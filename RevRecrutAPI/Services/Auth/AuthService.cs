@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RevRecrutAPI.DB;
 using RevRecrutAPI.DTOs.UserDto;
-using RevRecrutAPI.Entities.User;
+using RevRecrutAPI.DTOs.UserLoginDto;
+using RevRecrutAPI.DTOs.UserRegisterDto;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,9 +18,9 @@ namespace RevRecrutAPI.Services.Auth;
 
 public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
 {
-    public async Task<TokenResponse?> LoginAsync(UserDto request)
+    public async Task<TokenResponse?> LoginAsync(UserLoginDto request)
     {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user is null)
         {
             return null;
@@ -28,12 +32,18 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
             return null;
         }
 
+        // Allow login only for users with confirmed email
+        if (!user.EmailConfirmed)
+        {
+            return null;
+        }
+
         return await CreateTokenResponse(user);
     }
 
-    public async Task<User?> RegisterAsync(UserDto request)
+    public async Task<User?> RegisterAsync(UserRegisterDto request)
     {
-        if (await context.Users.AnyAsync(u => u.Username == request.Username))
+        if (await context.Users.AnyAsync(u => u.Email == request.Email))
         {
             return null;
         }
@@ -43,11 +53,18 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
         var hashedPassword = new PasswordHasher<User>()
             .HashPassword(user, request.Password);
 
-        user.Username = request.Username;
         user.PasswordHash = hashedPassword;
+        user.Email = request.Email;
+        user.FirstName = request.FirstName;
+        user.LastName = request.LastName;
+
+        user.EmailConfirmationToken = GenerateRefreshToken();
+        user.EmailConfirmationTokenExpiry = DateTime.UtcNow.AddHours(24);
 
         context.Users.Add(user);
         await context.SaveChangesAsync();
+
+        await SendEmailConfirmationAsync(user);
 
         return user;
     }
@@ -60,6 +77,70 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
             return null;
         }
         return await CreateTokenResponse(user);
+    }
+
+    public async Task SendEmailConfirmationAsync(User user)
+    {
+        // Use client URI from configuration if available
+        var client = configuration.GetValue<string>("AppSettings:ClientUri");
+        string confirmUrl;
+        if (!string.IsNullOrEmpty(client))
+        {
+            confirmUrl = $"{client.TrimEnd('/')}/api/auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(user.EmailConfirmationToken ?? string.Empty)}";
+        }
+        else
+        {
+            confirmUrl = $"/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(user.EmailConfirmationToken ?? string.Empty)}";
+        }
+
+        var smtpHost = configuration.GetValue<string>("Smtp:Host");
+        var smtpPort = configuration.GetValue<int?>("Smtp:Port") ?? 25;
+        var smtpUser = configuration.GetValue<string>("Smtp:User");
+        var smtpPass = configuration.GetValue<string>("Smtp:Pass");
+        var from = configuration.GetValue<string>("Smtp:From") ?? "no-reply@gmail.com";
+
+        if (string.IsNullOrEmpty(smtpHost))
+        {
+            return;
+        }
+
+        var mail = new MailMessage(from, user.Email)
+        {
+            Subject = "Confirm your email",
+            Body = $"Please confirm your email by clicking the following link: {confirmUrl}",
+            IsBodyHtml = false
+        };
+
+        using var clientSmtp = new SmtpClient(smtpHost, smtpPort);
+        if (!string.IsNullOrEmpty(smtpUser))
+        {
+            clientSmtp.Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass);
+        }
+        clientSmtp.EnableSsl = true;
+
+        try
+        {
+            await clientSmtp.SendMailAsync(mail);
+        }
+        catch (SmtpException ex)
+        {
+            Debug.WriteLine(ex);
+        }
+    }
+
+    public async Task<bool> ConfirmEmailAsync(Guid userId, string token)
+    {
+        var user = await context.Users.FindAsync(userId);
+        if (user is null || user.EmailConfirmationToken != token || user.EmailConfirmationTokenExpiry <= DateTime.UtcNow)
+        {
+            return false;
+        }
+
+        user.EmailConfirmed = true;
+        user.EmailConfirmationToken = null;
+        user.EmailConfirmationTokenExpiry = null;
+        await context.SaveChangesAsync();
+        return true;
     }
 
     private async Task<TokenResponse> CreateTokenResponse(User user)
@@ -75,7 +156,8 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+            new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Role, user.Role),
         };
@@ -125,5 +207,4 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
 
         return user;
     }
-
 }
